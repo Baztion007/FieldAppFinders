@@ -1,0 +1,184 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Default deny catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+    function incoming() {
+      return request.resource.data;
+    }
+    function existing() {
+      return resource.data;
+    }
+    function isValidEmail(email) {
+      return email is string && email.size() >= 3 && email.size() <= 254 && email.matches('^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$');
+    }
+
+    // Product Statistics (views, clicks, names, categories)
+    function isValidProductStat(data) {
+      return ['views', 'clicks', 'name', 'category'].hasAll(data.keys())
+        && data.keys().size() >= 1
+        && data.keys().size() <= 4
+        && (!('views' in data) || (data.views is int && data.views >= 0))
+        && (!('clicks' in data) || (data.clicks is int && data.clicks >= 0))
+        && (!('name' in data) || (data.name is string && data.name.size() <= 128))
+        && (!('category' in data) || (data.category is string && data.category.size() <= 128));
+    }
+
+    match /product_stats/{productId} {
+      allow read: if isValidId(productId);
+      allow create: if isValidId(productId) && isValidProductStat(incoming());
+      allow update: if isValidId(productId)
+        && isValidProductStat(incoming())
+        && incoming().diff(existing()).affectedKeys().hasOnly(['views', 'clicks', 'name', 'category']);
+      allow delete: if isValidId(productId);
+    }
+
+    // Affiliate Clicks (outbound link click tracking & conversion paths)
+    function isValidAffiliateClick(data) {
+      return data.keys().hasAll(['productId', 'productName', 'conversionPath', 'referrer', 'placement', 'createdAt'])
+        && data.keys().size() == 6
+        && data.productId is string && data.productId.size() <= 128
+        && data.productName is string && data.productName.size() <= 128
+        && data.conversionPath is string && data.conversionPath.size() <= 500
+        && data.referrer is string && data.referrer.size() <= 500
+        && data.placement is string && data.placement.size() <= 128
+        && data.createdAt == request.time;
+    }
+
+    match /affiliate_clicks/{clickId} {
+      allow read: if isValidId(clickId);
+      allow list: if true;
+      allow create: if isValidId(clickId) && isValidAffiliateClick(incoming());
+      allow update, delete: if false;
+    }
+
+    // Newsletter Subscribers
+    function isValidNewsletterSubscriber(data) {
+      return ['email', 'isWeekly', 'createdAt'].hasAll(data.keys())
+        && data.keys().hasAll(['email', 'createdAt'])
+        && data.keys().size() >= 2
+        && data.keys().size() <= 3
+        && isValidEmail(data.email)
+        && (!('isWeekly' in data) || data.isWeekly is bool)
+        && data.createdAt == request.time;
+    }
+
+    match /newsletter_subscribers/{subscriberId} {
+      allow get: if isValidId(subscriberId);
+      allow create: if isValidId(subscriberId) && isValidNewsletterSubscriber(incoming());
+      allow list, update, delete: if false;
+    }
+
+    // Leads (checklist and guide downloads)
+    function isValidLead(data) {
+      return ['email', 'isWeekly', 'eventName', 'createdAt'].hasAll(data.keys())
+        && data.keys().hasAll(['email', 'eventName', 'createdAt'])
+        && data.keys().size() >= 3
+        && data.keys().size() <= 4
+        && isValidEmail(data.email)
+        && (!('isWeekly' in data) || data.isWeekly is bool)
+        && data.eventName is string && data.eventName.size() <= 100
+        && data.createdAt == request.time;
+    }
+
+    match /leads/{leadId} {
+      allow get: if isValidId(leadId);
+      allow create: if isValidId(leadId) && isValidLead(incoming());
+      allow list, update, delete: if false;
+    }
+
+    // Quiz Leads (matchmaker quiz completions)
+    function isValidQuizLead(data) {
+      return data.keys().hasAll(['industry', 'size', 'goal', 'email', 'recommendedProduct', 'createdAt'])
+        && data.keys().size() == 6
+        && isValidEmail(data.email)
+        && data.industry is string && data.industry.size() <= 100
+        && data.size is string && data.size.size() <= 100
+        && data.goal is string && data.goal.size() <= 200
+        && data.recommendedProduct is string && data.recommendedProduct.size() <= 100
+        && data.createdAt == request.time;
+    }
+
+    match /quiz_leads/{quizLeadId} {
+      allow get: if isValidId(quizLeadId);
+      allow create: if isValidId(quizLeadId) && isValidQuizLead(incoming());
+      allow list, update, delete: if false;
+    }
+
+    // ROI Calculator Leads
+    function isValidRoiLead(data) {
+      return data.keys().hasAll(['email', 'source', 'trade', 'techCount', 'totalMonthlyGain', 'totalAnnualGain', 'recommendedTool', 'createdAt'])
+        && data.keys().size() == 8
+        && isValidEmail(data.email)
+        && data.source is string && data.source.size() <= 100
+        && data.trade is string && data.trade.size() <= 100
+        && data.techCount is int && data.techCount >= 1 && data.techCount <= 500
+        && (data.totalMonthlyGain is int || data.totalMonthlyGain is float)
+        && (data.totalAnnualGain is int || data.totalAnnualGain is float)
+        && data.recommendedTool is string && data.recommendedTool.size() <= 100
+        && data.createdAt == request.time;
+    }
+
+    match /roi_leads/{roiLeadId} {
+      allow get: if isValidId(roiLeadId);
+      allow create: if isValidId(roiLeadId) && isValidRoiLead(incoming());
+      allow list, update, delete: if false;
+    }
+
+    // Analytics running totals
+    function isValidAnalyticsTotal(data) {
+      return ['totalSubs', 'totalLeads'].hasAll(data.keys())
+        && data.keys().size() >= 1
+        && data.keys().size() <= 2
+        && (!('totalSubs' in data) || (data.totalSubs is int && data.totalSubs >= 0))
+        && (!('totalLeads' in data) || (data.totalLeads is int && data.totalLeads >= 0));
+    }
+
+    match /analytics/{totalId} {
+      allow read: if isValidId(totalId);
+      allow create: if isValidId(totalId) && isValidAnalyticsTotal(incoming());
+      allow update: if isValidId(totalId)
+        && isValidAnalyticsTotal(incoming())
+        && incoming().diff(existing()).affectedKeys().hasOnly(['totalSubs', 'totalLeads']);
+      allow delete: if isValidId(totalId);
+    }
+
+    // Community Contractor Reviews
+    function isValidReview(data) {
+      return data.keys().hasAll(['productId', 'productName', 'authorName', 'companyName', 'trade', 'rating', 'headline', 'pros', 'cons', 'recommend', 'status', 'createdAt'])
+        && data.productId is string && data.productId.size() <= 128
+        && data.productName is string && data.productName.size() <= 128
+        && data.authorName is string && data.authorName.size() <= 128
+        && data.companyName is string && data.companyName.size() <= 128
+        && data.trade is string && data.trade.size() <= 100
+        && (data.rating is int || data.rating is float) && data.rating >= 1 && data.rating <= 5
+        && data.headline is string && data.headline.size() <= 200
+        && data.pros is string && data.pros.size() <= 2000
+        && data.cons is string && data.cons.size() <= 2000
+        && data.recommend is bool
+        && data.status in ['pending', 'approved', 'rejected']
+        && data.createdAt == request.time;
+    }
+
+    match /reviews/{reviewId} {
+      allow read: if isValidId(reviewId);
+      allow list: if true;
+      allow create: if isValidId(reviewId) && isValidReview(incoming()) && incoming().status == 'pending';
+      allow update: if isValidId(reviewId) && incoming().status in ['pending', 'approved', 'rejected'];
+      allow delete: if isValidId(reviewId);
+    }
+
+    // Health / connectivity test collection
+    match /test/{testId} {
+      allow read: if isValidId(testId);
+    }
+  }
+}

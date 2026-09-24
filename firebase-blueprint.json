@@ -1,0 +1,248 @@
+{
+  "entities": {
+    "ProductStat": {
+      "title": "ProductStat",
+      "description": "Aggregated interaction metrics for a reviewed software product",
+      "type": "object",
+      "properties": {
+        "views": {
+          "type": "integer",
+          "description": "Total number of page views for this product"
+        },
+        "clicks": {
+          "type": "integer",
+          "description": "Total number of outbound affiliate link clicks"
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the software product",
+          "maxLength": 128
+        },
+        "category": {
+          "type": "string",
+          "description": "Primary industry category of the product",
+          "maxLength": 128
+        }
+      }
+    },
+    "AffiliateClick": {
+      "title": "AffiliateClick",
+      "description": "Individual outbound affiliate click event log for attribution and conversion tracking",
+      "type": "object",
+      "properties": {
+        "productId": {
+          "type": "string",
+          "description": "ID of the clicked product",
+          "maxLength": 128
+        },
+        "productName": {
+          "type": "string",
+          "description": "Name of the clicked product",
+          "maxLength": 128
+        },
+        "conversionPath": {
+          "type": "string",
+          "description": "Page route where the affiliate click originated",
+          "maxLength": 500
+        },
+        "referrer": {
+          "type": "string",
+          "description": "HTTP referrer header value",
+          "maxLength": 500
+        },
+        "placement": {
+          "type": "string",
+          "description": "UI component placement of the clicked CTA button",
+          "maxLength": 128
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when the click was recorded"
+        }
+      },
+      "required": ["productId", "productName", "conversionPath", "referrer", "placement", "createdAt"]
+    },
+    "NewsletterSubscriber": {
+      "title": "NewsletterSubscriber",
+      "description": "Email newsletter subscriber registration record",
+      "type": "object",
+      "properties": {
+        "email": {
+          "type": "string",
+          "format": "email",
+          "description": "Subscriber email address",
+          "maxLength": 254
+        },
+        "isWeekly": {
+          "type": "boolean",
+          "description": "Whether subscriber opted into weekly digest updates"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of signup"
+        }
+      },
+      "required": ["email", "createdAt"]
+    },
+    "Lead": {
+      "title": "Lead",
+      "description": "Lead generated from checklist download or buying guide resource",
+      "type": "object",
+      "properties": {
+        "email": {
+          "type": "string",
+          "format": "email",
+          "description": "Lead contact email address",
+          "maxLength": 254
+        },
+        "isWeekly": {
+          "type": "boolean",
+          "description": "Whether lead opted into weekly newsletter tips"
+        },
+        "eventName": {
+          "type": "string",
+          "description": "Triggering event name such as checklist_download",
+          "maxLength": 100
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of lead generation"
+        }
+      },
+      "required": ["email", "eventName", "createdAt"]
+    },
+    "QuizLead": {
+      "title": "QuizLead",
+      "description": "Contractor quiz response with matching software recommendation and lead email",
+      "type": "object",
+      "properties": {
+        "industry": {
+          "type": "string",
+          "description": "Selected primary industry",
+          "maxLength": 100
+        },
+        "size": {
+          "type": "string",
+          "description": "Team size range",
+          "maxLength": 100
+        },
+        "goal": {
+          "type": "string",
+          "description": "Primary business goal",
+          "maxLength": 200
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "description": "Contact email address",
+          "maxLength": 254
+        },
+        "recommendedProduct": {
+          "type": "string",
+          "description": "Name of the recommended software product",
+          "maxLength": 100
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of quiz completion"
+        }
+      },
+      "required": ["industry", "size", "goal", "email", "recommendedProduct", "createdAt"]
+    },
+    "AnalyticsTotal": {
+      "title": "AnalyticsTotal",
+      "description": "High-level running aggregate counters for admin dashboards",
+      "type": "object",
+      "properties": {
+        "totalSubs": {
+          "type": "integer",
+          "description": "Running total of newsletter subscribers"
+        },
+        "totalLeads": {
+          "type": "integer",
+          "description": "Running total of downloaded checklist leads"
+        }
+      }
+    },
+    "RoiLead": {
+      "title": "RoiLead",
+      "description": "Contractor ROI calculation breakdown lead submission",
+      "type": "object",
+      "properties": {
+        "email": {
+          "type": "string",
+          "format": "email",
+          "description": "Contractor contact email address",
+          "maxLength": 254
+        },
+        "source": {
+          "type": "string",
+          "description": "Lead source identifier",
+          "maxLength": 100
+        },
+        "trade": {
+          "type": "string",
+          "description": "Selected trade or industry",
+          "maxLength": 100
+        },
+        "techCount": {
+          "type": "integer",
+          "description": "Number of field technicians"
+        },
+        "totalMonthlyGain": {
+          "type": "number",
+          "description": "Estimated total monthly net gain in dollars"
+        },
+        "totalAnnualGain": {
+          "type": "number",
+          "description": "Estimated total annual net gain in dollars"
+        },
+        "recommendedTool": {
+          "type": "string",
+          "description": "Recommended software platform",
+          "maxLength": 100
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of lead submission"
+        }
+      },
+      "required": ["email", "source", "trade", "techCount", "totalMonthlyGain", "totalAnnualGain", "recommendedTool", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/product_stats/{productId}": {
+      "schema": "ProductStat",
+      "description": "Product interaction counters and metadata"
+    },
+    "/affiliate_clicks/{clickId}": {
+      "schema": "AffiliateClick",
+      "description": "Log of affiliate link click occurrences"
+    },
+    "/newsletter_subscribers/{subscriberId}": {
+      "schema": "NewsletterSubscriber",
+      "description": "User email submissions for the newsletter"
+    },
+    "/leads/{leadId}": {
+      "schema": "Lead",
+      "description": "User lead captures for downloadable guides and resources"
+    },
+    "/quiz_leads/{quizLeadId}": {
+      "schema": "QuizLead",
+      "description": "Completed matchmaker quiz submissions"
+    },
+    "/roi_leads/{roiLeadId}": {
+      "schema": "RoiLead",
+      "description": "Saved contractor ROI summary requests"
+    },
+    "/analytics/{totalId}": {
+      "schema": "AnalyticsTotal",
+      "description": "Global aggregate counter documents"
+    }
+  }
+}

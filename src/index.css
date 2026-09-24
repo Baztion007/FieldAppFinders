@@ -1,0 +1,91 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --font-sans: "Public Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Libre Baskerville", ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+
+  --color-brand-50: #f0fdfa;
+  --color-brand-100: #ccfbf1;
+  --color-brand-600: #0d9488;
+  --color-brand-700: #0f766e;
+  --color-brand-900: #134e4a;
+}
+
+@layer base {
+  body {
+    @apply text-base leading-relaxed bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-200 transition-colors duration-200;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-serif text-slate-900 dark:text-white;
+  }
+
+  h1 {
+    @apply text-4xl md:text-5xl font-bold leading-tight tracking-tight;
+  }
+  
+  h2 {
+    @apply text-3xl md:text-4xl font-bold leading-tight tracking-tight;
+  }
+  
+  h3 {
+    @apply text-2xl md:text-3xl font-bold leading-snug;
+  }
+  
+  p {
+    @apply text-slate-700 dark:text-slate-300 max-w-[70ch];
+  }
+}
+
+@layer utilities {
+  .hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@media print {
+  header, footer, nav, .print-hidden, .print\:hidden {
+    display: none !important;
+  }
+  body {
+    background: white !important;
+    color: black !important;
+    font-size: 12pt;
+  }
+  article {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  
+  /* Prevent page breaks inside cards and comparison tables */
+  .product-card, .comparison-table, .author-bio, .feature-list, section {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  /* Multi-column layout for product grids in print */
+  .grid {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 1rem !important;
+  }
+  
+  .grid > div {
+    flex: 1 1 calc(50% - 1rem) !important;
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  h1, h2, h3 {
+    page-break-after: avoid;
+    break-after: avoid;
+  }
+}
